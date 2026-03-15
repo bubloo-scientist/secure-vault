@@ -1,15 +1,12 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   FolderOpen,
   FileText,
-  Folder,
   Download,
   Trash2,
   Upload,
   ChevronRight,
-  MoreHorizontal,
   ArrowUpDown,
-  Eye,
   X,
 } from "lucide-react";
 import {
@@ -19,14 +16,18 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface FileItem {
   id: string;
   name: string;
-  type: "file" | "folder";
   size: string;
+  sizeBytes: number;
   modified: string;
   owner: string;
+  storagePath: string;
 }
 
 function formatSize(bytes: number): string {
@@ -36,43 +37,127 @@ function formatSize(bytes: number): string {
   return `${(bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
 }
 
-function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
-
 export default function Files() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const handleFiles = useCallback((fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0) return;
-    setUploading(true);
+  const fetchFiles = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("files_metadata")
+        .select("*, profiles:uploaded_by(full_name, email)")
+        .order("created_at", { ascending: false });
 
-    const newFiles: FileItem[] = Array.from(fileList).map((f) => ({
-      id: crypto.randomUUID(),
-      name: f.name,
-      type: "file" as const,
-      size: formatSize(f.size),
-      modified: formatDate(new Date()),
-      owner: "Admin",
-    }));
+      if (error) throw error;
 
-    // Simulate brief upload delay
-    setTimeout(() => {
-      setFiles((prev) => [...newFiles, ...prev]);
-      setUploading(false);
-    }, 400);
+      setFiles(
+        (data || []).map((f: any) => ({
+          id: f.id,
+          name: f.name,
+          size: formatSize(f.size_bytes),
+          sizeBytes: f.size_bytes,
+          modified: new Date(f.created_at).toLocaleDateString(),
+          owner: f.profiles?.full_name || f.profiles?.email || "Unknown",
+          storagePath: f.storage_path,
+        }))
+      );
+    } catch (err) {
+      console.error("Error fetching files:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleRemove = (id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
-    setDeleteConfirm(null);
+  useEffect(() => {
+    fetchFiles();
+  }, [fetchFiles]);
+
+  const handleFiles = useCallback(
+    async (fileList: FileList | null) => {
+      if (!fileList || fileList.length === 0 || !user) return;
+      setUploading(true);
+
+      try {
+        for (const file of Array.from(fileList)) {
+          const storagePath = `${user.id}/${Date.now()}-${file.name}`;
+
+          // Upload to storage
+          const { error: uploadError } = await supabase.storage
+            .from("vault-files")
+            .upload(storagePath, file);
+
+          if (uploadError) throw uploadError;
+
+          // Save metadata
+          const { error: metaError } = await supabase
+            .from("files_metadata")
+            .insert({
+              name: file.name,
+              storage_path: storagePath,
+              size_bytes: file.size,
+              mime_type: file.type || null,
+              uploaded_by: user.id,
+            });
+
+          if (metaError) throw metaError;
+        }
+
+        toast({ title: "Upload complete", description: `${fileList.length} file(s) uploaded.` });
+        fetchFiles();
+      } catch (err: any) {
+        toast({
+          title: "Upload failed",
+          description: err.message,
+          variant: "destructive",
+        });
+      } finally {
+        setUploading(false);
+      }
+    },
+    [user, fetchFiles, toast]
+  );
+
+  const handleDownload = async (file: FileItem) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("vault-files")
+        .download(file.storagePath);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast({ title: "Download failed", description: err.message, variant: "destructive" });
+    }
   };
 
-  const totalSize = files.length;
+  const handleRemove = async (id: string) => {
+    const file = files.find((f) => f.id === id);
+    if (!file) return;
+
+    try {
+      await supabase.storage.from("vault-files").remove([file.storagePath]);
+      await supabase.from("files_metadata").delete().eq("id", id);
+      fetchFiles();
+      setDeleteConfirm(null);
+      toast({ title: "File deleted" });
+    } catch (err: any) {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const totalSize = files.reduce((sum, f) => sum + f.sizeBytes, 0);
 
   return (
     <div className="space-y-4">
@@ -141,11 +226,17 @@ export default function Files() {
               <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">Size</th>
               <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">Modified</th>
               <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">Owner</th>
-              <th className="w-10" />
+              <th className="w-20" />
             </tr>
           </thead>
           <tbody>
-            {files.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-16 text-center">
+                  <p className="text-sm text-muted-foreground">Loading files…</p>
+                </td>
+              </tr>
+            ) : files.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-16 text-center">
                   <FolderOpen className="w-6 h-6 mx-auto text-muted-foreground/40 mb-2" strokeWidth={1.5} />
@@ -155,28 +246,31 @@ export default function Files() {
               </tr>
             ) : (
               files.map((file) => (
-                <tr
-                  key={file.id}
-                  className="border-b border-border last:border-0 hover:bg-surface group transition-colors duration-150 cursor-pointer"
-                >
+                <tr key={file.id} className="border-b border-border last:border-0 hover:bg-surface group transition-colors duration-150">
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-3">
                       <FileText className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
-                      <span className="text-sm text-foreground group-hover:translate-x-1 transition-transform duration-150">
-                        {file.name}
-                      </span>
+                      <span className="text-sm text-foreground">{file.name}</span>
                     </div>
                   </td>
                   <td className="px-4 py-2.5 text-sm font-mono-data text-muted-foreground">{file.size}</td>
                   <td className="px-4 py-2.5 text-sm font-mono-data text-muted-foreground">{file.modified}</td>
                   <td className="px-4 py-2.5 text-sm text-muted-foreground">{file.owner}</td>
                   <td className="px-4 py-2.5">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setDeleteConfirm(file.id); }}
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all duration-150"
-                    >
-                      <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                    </button>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-150">
+                      <button
+                        onClick={() => handleDownload(file)}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface"
+                      >
+                        <Download className="w-4 h-4" strokeWidth={1.5} />
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(file.id)}
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -184,7 +278,9 @@ export default function Files() {
           </tbody>
         </table>
         <div className="px-4 py-2.5 border-t border-border flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">{files.length} item{files.length !== 1 ? "s" : ""}</span>
+          <span className="text-xs text-muted-foreground">
+            {files.length} item{files.length !== 1 ? "s" : ""} · {formatSize(totalSize)} used
+          </span>
           <span className="text-xs text-muted-foreground font-mono-data">10 TB available</span>
         </div>
       </div>
@@ -203,10 +299,7 @@ export default function Files() {
             ? This action cannot be undone.
           </p>
           <DialogFooter>
-            <button
-              onClick={() => setDeleteConfirm(null)}
-              className="h-8 px-4 rounded-md text-sm text-muted-foreground hover:text-foreground border border-border transition-colors duration-150"
-            >
+            <button onClick={() => setDeleteConfirm(null)} className="h-8 px-4 rounded-md text-sm text-muted-foreground hover:text-foreground border border-border transition-colors duration-150">
               Cancel
             </button>
             <button

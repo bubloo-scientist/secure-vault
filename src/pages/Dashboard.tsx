@@ -16,14 +16,7 @@ const stats = [
   { label: "Uploads Today", value: "0", sub: "transfers", icon: Upload, trend: "Awaiting uploads" },
 ];
 
-const recentActivity = [
-  { action: "UPLOAD", user: "Sarah Chen", target: "/Engineering/Backups/db_dump_0315.sql.gz", size: "4.2 GB", time: "2 min ago" },
-  { action: "DOWNLOAD", user: "Marcus Lee", target: "/Finance/Q3_Report.xlsx", size: "2.4 MB", time: "8 min ago" },
-  { action: "DELETE", user: "Admin", target: "/Temp/old_logs_2024.tar", size: "890 MB", time: "15 min ago" },
-  { action: "PERM_CHANGE", user: "Admin", target: "Granted READ to James Park on /Engineering", size: "—", time: "1h ago" },
-  { action: "UPLOAD", user: "Alex Rivera", target: "/Marketing/Campaign_Assets/hero_v2.psd", size: "156 MB", time: "2h ago" },
-  { action: "UPLOAD", user: "Taylor Kim", target: "/Research/datasets/training_set_v4.parquet", size: "8.1 GB", time: "3h ago" },
-];
+const recentActivity: { action: string; user: string; target: string; size: string; time: string }[] = [];
 
 const actionColors: Record<string, string> = {
   UPLOAD: "text-status-success",

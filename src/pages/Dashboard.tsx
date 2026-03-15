@@ -10,10 +10,10 @@ import {
 } from "lucide-react";
 
 const stats = [
-  { label: "Total Storage", value: "2.4 TB", sub: "of 10 TB", icon: HardDrive, trend: "+120 GB this week" },
-  { label: "Files Indexed", value: "847,291", sub: "objects", icon: FileText, trend: "+4,281 today" },
-  { label: "Active Users", value: "24", sub: "team members", icon: Users, trend: "3 online now" },
-  { label: "Uploads Today", value: "156", sub: "transfers", icon: Upload, trend: "12.8 GB ingested" },
+  { label: "Total Storage", value: "0 B", sub: "of 10 TB", icon: HardDrive, trend: "No data yet" },
+  { label: "Files Indexed", value: "0", sub: "objects", icon: FileText, trend: "Ready to ingest" },
+  { label: "Active Users", value: "1", sub: "admin", icon: Users, trend: "You" },
+  { label: "Uploads Today", value: "0", sub: "transfers", icon: Upload, trend: "Awaiting uploads" },
 ];
 
 const recentActivity = [

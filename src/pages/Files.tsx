@@ -20,16 +20,7 @@ interface FileItem {
   objects?: number;
 }
 
-const mockFiles: FileItem[] = [
-  { name: "Engineering", type: "folder", size: "1.2 TB", modified: "2026-03-15", owner: "System", objects: 284102 },
-  { name: "Finance", type: "folder", size: "340 GB", modified: "2026-03-14", owner: "Sarah Chen", objects: 12840 },
-  { name: "Marketing", type: "folder", size: "89 GB", modified: "2026-03-15", owner: "Alex Rivera", objects: 4201 },
-  { name: "Research", type: "folder", size: "680 GB", modified: "2026-03-13", owner: "Taylor Kim", objects: 98450 },
-  { name: "system_config.yaml", type: "file", size: "4.2 KB", modified: "2026-03-15", owner: "Admin" },
-  { name: "backup_manifest.json", type: "file", size: "1.8 MB", modified: "2026-03-15", owner: "System" },
-  { name: "access_policy.pdf", type: "file", size: "240 KB", modified: "2026-03-10", owner: "Admin" },
-  { name: "migration_log_0315.txt", type: "file", size: "12 KB", modified: "2026-03-15", owner: "System" },
-];
+const mockFiles: FileItem[] = [];
 
 export default function Files() {
   const [dragOver, setDragOver] = useState(false);

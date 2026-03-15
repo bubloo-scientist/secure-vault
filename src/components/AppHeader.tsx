@@ -1,9 +1,11 @@
-import { Search, Bell, User } from "lucide-react";
+import { Search, Bell, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import { CommandPalette } from "./CommandPalette";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function AppHeader() {
   const [commandOpen, setCommandOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   return (
     <>
@@ -19,12 +21,18 @@ export function AppHeader() {
           </button>
         </div>
         <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground font-mono-data mr-2">
+            {user?.email}
+          </span>
           <button className="w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface transition-colors duration-150 relative">
             <Bell className="w-4 h-4" strokeWidth={1.5} />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-accent rounded-full" />
           </button>
-          <button className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground">
-            <User className="w-4 h-4" strokeWidth={1.5} />
+          <button
+            onClick={signOut}
+            className="w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors duration-150"
+            title="Sign out"
+          >
+            <LogOut className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
       </header>

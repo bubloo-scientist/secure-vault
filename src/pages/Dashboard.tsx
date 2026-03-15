@@ -57,20 +57,28 @@ export default function Dashboard() {
           </a>
         </div>
         <div className="divide-y divide-border">
-          {recentActivity.map((entry, i) => (
-            <div key={i} className="flex items-center gap-4 px-4 py-2.5 hover:bg-surface transition-colors duration-150">
-              <span className={`text-[10px] font-mono-data font-medium w-24 ${actionColors[entry.action] || "text-muted-foreground"}`}>
-                {entry.action}
-              </span>
-              <span className="text-sm text-foreground w-28 truncate">{entry.user}</span>
-              <span className="text-sm text-muted-foreground font-mono-data flex-1 truncate">{entry.target}</span>
-              <span className="text-xs text-muted-foreground font-mono-data w-20 text-right">{entry.size}</span>
-              <span className="text-xs text-muted-foreground w-20 text-right flex items-center justify-end gap-1">
-                <Clock className="w-3 h-3" strokeWidth={1.5} />
-                {entry.time}
-              </span>
+          {recentActivity.length === 0 ? (
+            <div className="px-4 py-12 text-center">
+              <Clock className="w-5 h-5 mx-auto text-muted-foreground/40 mb-2" strokeWidth={1.5} />
+              <p className="text-sm text-muted-foreground">No activity yet.</p>
+              <p className="text-xs text-muted-foreground mt-1">Actions will appear here as your team uses the system.</p>
             </div>
-          ))}
+          ) : (
+            recentActivity.map((entry, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-2.5 hover:bg-surface transition-colors duration-150">
+                <span className={`text-[10px] font-mono-data font-medium w-24 ${actionColors[entry.action] || "text-muted-foreground"}`}>
+                  {entry.action}
+                </span>
+                <span className="text-sm text-foreground w-28 truncate">{entry.user}</span>
+                <span className="text-sm text-muted-foreground font-mono-data flex-1 truncate">{entry.target}</span>
+                <span className="text-xs text-muted-foreground font-mono-data w-20 text-right">{entry.size}</span>
+                <span className="text-xs text-muted-foreground w-20 text-right flex items-center justify-end gap-1">
+                  <Clock className="w-3 h-3" strokeWidth={1.5} />
+                  {entry.time}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

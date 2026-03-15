@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  FolderOpen,
   FileText,
   Folder,
   Download,
@@ -20,16 +21,7 @@ interface FileItem {
   objects?: number;
 }
 
-const mockFiles: FileItem[] = [
-  { name: "Engineering", type: "folder", size: "1.2 TB", modified: "2026-03-15", owner: "System", objects: 284102 },
-  { name: "Finance", type: "folder", size: "340 GB", modified: "2026-03-14", owner: "Sarah Chen", objects: 12840 },
-  { name: "Marketing", type: "folder", size: "89 GB", modified: "2026-03-15", owner: "Alex Rivera", objects: 4201 },
-  { name: "Research", type: "folder", size: "680 GB", modified: "2026-03-13", owner: "Taylor Kim", objects: 98450 },
-  { name: "system_config.yaml", type: "file", size: "4.2 KB", modified: "2026-03-15", owner: "Admin" },
-  { name: "backup_manifest.json", type: "file", size: "1.8 MB", modified: "2026-03-15", owner: "System" },
-  { name: "access_policy.pdf", type: "file", size: "240 KB", modified: "2026-03-10", owner: "Admin" },
-  { name: "migration_log_0315.txt", type: "file", size: "12 KB", modified: "2026-03-15", owner: "System" },
-];
+const mockFiles: FileItem[] = [];
 
 export default function Files() {
   const [dragOver, setDragOver] = useState(false);
@@ -84,43 +76,53 @@ export default function Files() {
             </tr>
           </thead>
           <tbody>
-            {mockFiles.map((file) => (
-              <tr
-                key={file.name}
-                className="border-b border-border last:border-0 hover:bg-surface group transition-colors duration-150 cursor-pointer"
-              >
-                <td className="px-4 py-2.5">
-                  <div className="flex items-center gap-3">
-                    {file.type === "folder" ? (
-                      <Folder className="w-4 h-4 text-accent" strokeWidth={1.5} />
-                    ) : (
-                      <FileText className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
-                    )}
-                    <span className="text-sm text-foreground group-hover:translate-x-1 transition-transform duration-150">
-                      {file.name}
-                    </span>
-                    {file.objects !== undefined && (
-                      <span className="text-[10px] font-mono-data text-muted-foreground">
-                        {file.objects.toLocaleString()} objects
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-4 py-2.5 text-sm font-mono-data text-muted-foreground">{file.size}</td>
-                <td className="px-4 py-2.5 text-sm font-mono-data text-muted-foreground">{file.modified}</td>
-                <td className="px-4 py-2.5 text-sm text-muted-foreground">{file.owner}</td>
-                <td className="px-4 py-2.5">
-                  <button className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-background transition-all duration-150">
-                    <MoreHorizontal className="w-4 h-4" strokeWidth={1.5} />
-                  </button>
+            {mockFiles.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-16 text-center">
+                  <FolderOpen className="w-6 h-6 mx-auto text-muted-foreground/40 mb-2" strokeWidth={1.5} />
+                  <p className="text-sm text-muted-foreground">No files yet.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Upload files using the drop zone above or the Upload button.</p>
                 </td>
               </tr>
-            ))}
+            ) : (
+              mockFiles.map((file) => (
+                <tr
+                  key={file.name}
+                  className="border-b border-border last:border-0 hover:bg-surface group transition-colors duration-150 cursor-pointer"
+                >
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-3">
+                      {file.type === "folder" ? (
+                        <Folder className="w-4 h-4 text-accent" strokeWidth={1.5} />
+                      ) : (
+                        <FileText className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+                      )}
+                      <span className="text-sm text-foreground group-hover:translate-x-1 transition-transform duration-150">
+                        {file.name}
+                      </span>
+                      {file.objects !== undefined && (
+                        <span className="text-[10px] font-mono-data text-muted-foreground">
+                          {file.objects.toLocaleString()} objects
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-2.5 text-sm font-mono-data text-muted-foreground">{file.size}</td>
+                  <td className="px-4 py-2.5 text-sm font-mono-data text-muted-foreground">{file.modified}</td>
+                  <td className="px-4 py-2.5 text-sm text-muted-foreground">{file.owner}</td>
+                  <td className="px-4 py-2.5">
+                    <button className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-background transition-all duration-150">
+                      <MoreHorizontal className="w-4 h-4" strokeWidth={1.5} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
         <div className="px-4 py-2.5 border-t border-border flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">8 items · 2.31 TB total</span>
-          <span className="text-xs text-muted-foreground font-mono-data">Page 1 of 1</span>
+          <span className="text-xs text-muted-foreground">{mockFiles.length} items · 0 B total</span>
+          <span className="text-xs text-muted-foreground font-mono-data">10 TB available</span>
         </div>
       </div>
     </div>

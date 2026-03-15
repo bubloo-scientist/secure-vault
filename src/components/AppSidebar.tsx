@@ -58,10 +58,10 @@ export function AppSidebar() {
         <div className="px-3 py-2">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-muted-foreground">Storage Used</span>
-            <span className="text-xs font-mono-data text-muted-foreground">2.4 / 10 TB</span>
+            <span className="text-xs font-mono-data text-muted-foreground">0 / 10 TB</span>
           </div>
           <div className="h-1.5 bg-border rounded-full overflow-hidden">
-            <div className="h-full bg-accent rounded-full" style={{ width: "24%" }} />
+            <div className="h-full bg-accent rounded-full" style={{ width: "0%" }} />
           </div>
         </div>
         <div className="flex items-center gap-2 px-3 py-2 mt-1">

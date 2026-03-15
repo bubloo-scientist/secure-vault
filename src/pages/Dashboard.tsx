@@ -10,20 +10,13 @@ import {
 } from "lucide-react";
 
 const stats = [
-  { label: "Total Storage", value: "2.4 TB", sub: "of 10 TB", icon: HardDrive, trend: "+120 GB this week" },
-  { label: "Files Indexed", value: "847,291", sub: "objects", icon: FileText, trend: "+4,281 today" },
-  { label: "Active Users", value: "24", sub: "team members", icon: Users, trend: "3 online now" },
-  { label: "Uploads Today", value: "156", sub: "transfers", icon: Upload, trend: "12.8 GB ingested" },
+  { label: "Total Storage", value: "0 B", sub: "of 10 TB", icon: HardDrive, trend: "No data yet" },
+  { label: "Files Indexed", value: "0", sub: "objects", icon: FileText, trend: "Ready to ingest" },
+  { label: "Active Users", value: "1", sub: "admin", icon: Users, trend: "You" },
+  { label: "Uploads Today", value: "0", sub: "transfers", icon: Upload, trend: "Awaiting uploads" },
 ];
 
-const recentActivity = [
-  { action: "UPLOAD", user: "Sarah Chen", target: "/Engineering/Backups/db_dump_0315.sql.gz", size: "4.2 GB", time: "2 min ago" },
-  { action: "DOWNLOAD", user: "Marcus Lee", target: "/Finance/Q3_Report.xlsx", size: "2.4 MB", time: "8 min ago" },
-  { action: "DELETE", user: "Admin", target: "/Temp/old_logs_2024.tar", size: "890 MB", time: "15 min ago" },
-  { action: "PERM_CHANGE", user: "Admin", target: "Granted READ to James Park on /Engineering", size: "—", time: "1h ago" },
-  { action: "UPLOAD", user: "Alex Rivera", target: "/Marketing/Campaign_Assets/hero_v2.psd", size: "156 MB", time: "2h ago" },
-  { action: "UPLOAD", user: "Taylor Kim", target: "/Research/datasets/training_set_v4.parquet", size: "8.1 GB", time: "3h ago" },
-];
+const recentActivity: { action: string; user: string; target: string; size: string; time: string }[] = [];
 
 const actionColors: Record<string, string> = {
   UPLOAD: "text-status-success",
@@ -64,20 +57,28 @@ export default function Dashboard() {
           </a>
         </div>
         <div className="divide-y divide-border">
-          {recentActivity.map((entry, i) => (
-            <div key={i} className="flex items-center gap-4 px-4 py-2.5 hover:bg-surface transition-colors duration-150">
-              <span className={`text-[10px] font-mono-data font-medium w-24 ${actionColors[entry.action] || "text-muted-foreground"}`}>
-                {entry.action}
-              </span>
-              <span className="text-sm text-foreground w-28 truncate">{entry.user}</span>
-              <span className="text-sm text-muted-foreground font-mono-data flex-1 truncate">{entry.target}</span>
-              <span className="text-xs text-muted-foreground font-mono-data w-20 text-right">{entry.size}</span>
-              <span className="text-xs text-muted-foreground w-20 text-right flex items-center justify-end gap-1">
-                <Clock className="w-3 h-3" strokeWidth={1.5} />
-                {entry.time}
-              </span>
+          {recentActivity.length === 0 ? (
+            <div className="px-4 py-12 text-center">
+              <Clock className="w-5 h-5 mx-auto text-muted-foreground/40 mb-2" strokeWidth={1.5} />
+              <p className="text-sm text-muted-foreground">No activity yet.</p>
+              <p className="text-xs text-muted-foreground mt-1">Actions will appear here as your team uses the system.</p>
             </div>
-          ))}
+          ) : (
+            recentActivity.map((entry, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-2.5 hover:bg-surface transition-colors duration-150">
+                <span className={`text-[10px] font-mono-data font-medium w-24 ${actionColors[entry.action] || "text-muted-foreground"}`}>
+                  {entry.action}
+                </span>
+                <span className="text-sm text-foreground w-28 truncate">{entry.user}</span>
+                <span className="text-sm text-muted-foreground font-mono-data flex-1 truncate">{entry.target}</span>
+                <span className="text-xs text-muted-foreground font-mono-data w-20 text-right">{entry.size}</span>
+                <span className="text-xs text-muted-foreground w-20 text-right flex items-center justify-end gap-1">
+                  <Clock className="w-3 h-3" strokeWidth={1.5} />
+                  {entry.time}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

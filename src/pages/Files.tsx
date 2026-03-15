@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  FolderOpen,
   FileText,
   Folder,
   Download,

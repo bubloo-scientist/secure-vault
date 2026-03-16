@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Clock, Filter, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,45 +28,55 @@ export default function ActivityLog() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchLogs = async () => {
-    const { data, error } = await supabase
-      .from("activity_log")
-      .select("*, profiles:user_id(full_name, email)")
-      .order("created_at", { ascending: false })
-      .limit(100);
+  const fetchLogs = useCallback(async () => {
+    try {
+      const [{ data: logData, error: logError }, { data: profiles, error: profileError }] = await Promise.all([
+        supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(100),
+        supabase.from("profiles").select("id, full_name, email"),
+      ]);
 
-    if (!error && data) {
+      if (logError) throw logError;
+      if (profileError) throw profileError;
+
+      const profileMap = new Map(
+        (profiles || []).map((profile) => [profile.id, profile.full_name || profile.email || "system"])
+      );
+
       setLogs(
-        data.map((row: any) => ({
+        (logData || []).map((row) => ({
           id: row.id,
           timestamp: new Date(row.created_at).toLocaleString(),
           action: row.action,
-          user: row.profiles?.email || row.profiles?.full_name || "system",
+          user: row.user_id ? profileMap.get(row.user_id) || "system" : "system",
           details: row.details || "—",
           ip: row.ip_address || "—",
           status: actionStatus[row.action] || "success",
         }))
       );
+    } catch (error) {
+      console.error("Error fetching activity log:", error);
+      setLogs([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchLogs();
+    void fetchLogs();
 
     const channel = supabase
       .channel("activity-log-realtime")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "activity_log" },
-        () => fetchLogs()
+        () => void fetchLogs()
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchLogs]);
 
   return (
     <div className="space-y-4">

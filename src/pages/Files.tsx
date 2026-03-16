@@ -153,6 +153,7 @@ export default function Files() {
     try {
       await supabase.storage.from("vault-files").remove([file.storagePath]);
       await supabase.from("files_metadata").delete().eq("id", id);
+      logActivity("FILE_DELETE", `Deleted: ${file.name}`);
       fetchFiles();
       setDeleteConfirm(null);
       toast({ title: "File deleted" });

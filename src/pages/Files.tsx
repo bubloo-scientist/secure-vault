@@ -109,6 +109,9 @@ export default function Files() {
           if (metaError) throw metaError;
         }
 
+        for (const file of Array.from(fileList)) {
+          logActivity("FILE_UPLOAD", `Uploaded: ${file.name} (${formatSize(file.size)})`);
+        }
         toast({ title: "Upload complete", description: `${fileList.length} file(s) uploaded.` });
         fetchFiles();
       } catch (err: any) {

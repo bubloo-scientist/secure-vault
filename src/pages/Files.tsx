@@ -19,6 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { logActivity } from "@/lib/logActivity";
 
 interface FileItem {
   id: string;
@@ -108,6 +109,9 @@ export default function Files() {
           if (metaError) throw metaError;
         }
 
+        for (const file of Array.from(fileList)) {
+          logActivity("FILE_UPLOAD", `Uploaded: ${file.name} (${formatSize(file.size)})`);
+        }
         toast({ title: "Upload complete", description: `${fileList.length} file(s) uploaded.` });
         fetchFiles();
       } catch (err: any) {
@@ -149,6 +153,7 @@ export default function Files() {
     try {
       await supabase.storage.from("vault-files").remove([file.storagePath]);
       await supabase.from("files_metadata").delete().eq("id", id);
+      logActivity("FILE_DELETE", `Deleted: ${file.name}`);
       fetchFiles();
       setDeleteConfirm(null);
       toast({ title: "File deleted" });
